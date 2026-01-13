@@ -16,56 +16,58 @@ export default function MyComplaints() {
       <div className="page-head">
         <div>
           <h1 className="page-title">My Complaints</h1>
-          <p className="subtitle">All complaints you have submitted ({total}).</p>
+          <p className="subtitle">{total} total</p>
         </div>
 
         <div className="item-actions">
           <Link to="/" className="btn">
-            Submit new
+            Home
           </Link>
         </div>
       </div>
 
       {total === 0 ? (
         <div className="card empty">
-          No complaints yet.{" "}
+          No complaints found.{" "}
           <Link to="/" className="link">
-            Submit your first complaint
+            Submit one on Home
           </Link>
           .
         </div>
       ) : (
         <div className="list">
-          {complaints.map((c) => (
-            <div key={c.id} className="item">
+          {complaints.map((complaint) => (
+            <div key={complaint.id} className="item">
               <div className="item-grid">
                 <div className="item-main">
                   <div className="item-top">
-                    <h2 className="item-title">{c.title}</h2>
+                    <h2 className="item-title">{complaint.title}</h2>
                     <span
-                      className={`badge ${String(c.status ?? "Pending")
+                      className={`badge ${String(complaint.status ?? "Pending")
                         .toLowerCase()
                         .includes("resolve")
                         ? "badge--ok"
-                        : String(c.status ?? "Pending")
+                        : String(complaint.status ?? "Pending")
                             .toLowerCase()
                             .includes("progress")
                         ? "badge--warn"
                         : "badge--neutral"}`}
                     >
-                      {c.status ?? "Pending"}
+                      {complaint.status ?? "Pending"}
                     </span>
                   </div>
 
                   <div className="item-meta">
-                    <span className="pill">Category: {c.category}</span>
+                    <span className="pill">{complaint.category}</span>
                   </div>
 
-                  {c.description ? <p className="item-desc">{c.description}</p> : null}
+                  {complaint.description ? (
+                    <p className="item-desc">{complaint.description}</p>
+                  ) : null}
                 </div>
 
                 <div className="item-right">
-                  <Link to={`/complaints/${c.id}`} className="btn primary">
+                  <Link to={`/complaints/${complaint.id}`} className="btn primary">
                     View details
                   </Link>
                 </div>

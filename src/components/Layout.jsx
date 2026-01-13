@@ -1,23 +1,28 @@
-
-import { NavLink } from "react-router-dom";
+import React from "react";
+import { Link } from "react-router-dom";
 
 export default function Layout({ children }) {
   return (
-    <>
-      <header className="topbar">
-        <div className="container brand">
-          <div className="title">Complaint Management</div>
-
-          <nav className="nav" aria-label="Primary">
-            <NavLink to="/" end>
+    <div>
+      <nav className="topbar">
+        <div className="container">
+          <div className="brand">
+            <h1 className="title">Complaint System</h1>
+          </div>
+          <div className="nav">
+            <Link to="/" className="btn">
               Home
-            </NavLink>
-            <NavLink to="/complaints">My Complaints</NavLink>
-          </nav>
+            </Link>
+            <Link to="/complaints" className="btn">
+              My Complaints
+            </Link>
+            <Link to="/admin/login" className="btn">
+              Admin Login
+            </Link>
+          </div>
         </div>
-      </header>
-
+      </nav>
       <main className="container">{children}</main>
-    </>
+    </div>
   );
 }
