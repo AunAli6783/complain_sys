@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { loadComplaints } from "../utils/storage.js";
+import { loadComplaints } from "../lib/storage.js";
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setComplaints(loadComplaints());
+    loadComplaints()
+      .then(setComplaints)
+      .finally(() => setLoading(false));
   }, []);
 
   const total = complaints.length;
+
+  if (loading) return <div className="card">Loading complaints...</div>;
 
   return (
     <section>

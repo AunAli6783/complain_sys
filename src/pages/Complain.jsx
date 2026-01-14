@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { addComplaint } from "../lib/storage";
 
@@ -6,16 +5,18 @@ export default function Complain() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
 
-    addComplaint({
+    await addComplaint({
       title,
-      description
+      description,
+      category: "general"
     });
 
     setTitle("");
     setDescription("");
+    alert("Complaint submitted successfully!");
   };
 
   return (

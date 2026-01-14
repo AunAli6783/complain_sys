@@ -1,20 +1,24 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { loadComplaints } from "../utils/storage.js";
+import { loadComplaints } from "../lib/storage.js";
 
 export default function ComplaintDetails() {
   const { id } = useParams();
   const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setComplaints(loadComplaints());
+    loadComplaints()
+      .then(setComplaints)
+      .finally(() => setLoading(false));
   }, []);
 
   const complaint = useMemo(
     () => complaints.find((c) => String(c.id) === String(id)),
     [complaints, id]
   );
+
+  if (loading) return <div className="card">Loading...</div>;
 
   if (!complaint) {
     return (

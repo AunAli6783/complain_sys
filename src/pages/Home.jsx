@@ -1,16 +1,25 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { addComplaint } from "../lib/storage";
 
 export default function Home() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("general");
+  const navigate = useNavigate();
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    addComplaint({ title, description });
-    setTitle("");
-    setDescription("");
+    try {
+      await addComplaint({ title, description, category });
+      setTitle("");
+      setDescription("");
+      setCategory("general");
+      alert("Complaint submitted successfully!");
+      navigate("/complaints");
+    } catch (error) {
+      alert("Failed to submit complaint. Please try again.");
+    }
   };
 
   return (
@@ -42,6 +51,19 @@ export default function Home() {
             placeholder="Enter complaint title"
             required
           />
+        </div>
+        <div className="field">
+          <label>Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          >
+            <option value="general">General</option>
+            <option value="technical">Technical</option>
+            <option value="billing">Billing</option>
+            <option value="service">Service</option>
+          </select>
         </div>
         <div className="field">
           <label>Description</label>

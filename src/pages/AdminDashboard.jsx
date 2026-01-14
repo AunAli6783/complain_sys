@@ -13,17 +13,17 @@ export default function AdminDashboard() {
       navigate("/admin/login");
       return;
     }
-    setComplaints(getComplaints());
+    getComplaints().then(setComplaints);
   }, [authed, navigate]);
 
-  const onResolve = (id) => {
+  const onResolve = async (id) => {
     const note = noteById[id] || "";
-    const next = resolveComplaint(id, note);
+    const next = await resolveComplaint(id, note);
     setComplaints(next);
   };
 
-  const open = complaints.filter((c) => c.status !== "resolved");
-  const resolved = complaints.filter((c) => c.status === "resolved");
+  const open = complaints.filter((c) => c.status !== "Resolved");
+  const resolved = complaints.filter((c) => c.status === "Resolved");
 
   return (
     <div style={{ padding: 24 }}>
