@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setAdminAuthed } from "../lib/storage";
+import { setAdminAuthed } from "../lib/storage.js";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -26,6 +26,19 @@ export default function AdminLogin() {
         setError(message);
         setLoading(false);
         return;
+      }
+
+      const bodyText = await response.text(); // read ONCE
+      let body = null;
+      try {
+        body = bodyText ? JSON.parse(bodyText) : null;
+      } catch {
+        body = null;
+      }
+
+      localStorage.setItem("adminUsername", (body && body.username) || username);
+      if (body && (body.id || body.adminId)) {
+        localStorage.setItem("adminId", String(body.id || body.adminId));
       }
 
       setAdminAuthed(true);

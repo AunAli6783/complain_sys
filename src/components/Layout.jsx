@@ -19,6 +19,9 @@ export default function Layout({ children }) {
             <Link to="/admin/login" className="btn">
               Admin Login
             </Link>
+            <Link to="/resolved" className="btn">
+              Resolved
+            </Link>
           </div>
         </div>
       </nav>

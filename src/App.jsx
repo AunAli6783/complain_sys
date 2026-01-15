@@ -7,6 +7,7 @@ import ComplaintDetails from "./pages/ComplaintDetails.jsx";
 import AdminSetup from "./pages/AdminSetup.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
+import ResolvedComplaints from "./pages/ResolvedComplaints.jsx";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+          <Route path="/resolved" element={<ResolvedComplaints />} />
         </Routes>
       </Layout>
     </BrowserRouter>

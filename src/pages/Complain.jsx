@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { addComplaint } from "../lib/storage";
+import { addComplaint } from "../lib/storage.js";
 
 export default function Complain() {
   const [title, setTitle] = useState("");

@@ -9,19 +9,26 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Get all complaints
+// Get all complaints (include resolver name if resolved)
 app.get('/api/complaints', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM complaints ORDER BY created_at DESC'
+      `
+      SELECT 
+        c.*,
+        a.username AS resolved_by_name
+      FROM complaints c
+      LEFT JOIN admins a ON a.id = c.resolved_by
+      ORDER BY c.created_at DESC
+      `
     );
 
-    // Normalize DB snake_case -> UI camelCase
     const normalized = rows.map((r) => ({
       ...r,
       createdAt: r.created_at ?? r.createdAt,
       resolvedAt: r.resolved_at ?? r.resolvedAt,
-      resolutionNote: r.resolution_note ?? r.resolutionNote
+      resolutionNote: r.resolution_note ?? r.resolutionNote,
+      resolvedByName: r.resolved_by_name ?? r.resolvedByName
     }));
 
     res.json(normalized);
@@ -47,19 +54,30 @@ app.post('/api/complaints', async (req, res) => {
   }
 });
 
-// Resolve complaint
+// Resolve complaint (now records which admin resolved it)
 app.put('/api/complaints/:id/resolve', async (req, res) => {
   const id = Number(req.params.id);
-  const { resolutionNote } = req.body;
+  const { resolutionNote, adminUsername } = req.body;
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid complaint id' });
   }
+  if (!adminUsername) {
+    return res.status(400).json({ error: 'adminUsername is required' });
+  }
 
   try {
+    const [admins] = await pool.query(
+      'SELECT id FROM admins WHERE username = ?',
+      [adminUsername]
+    );
+    if (!admins.length) return res.status(400).json({ error: 'Admin not found' });
+
+    const adminId = admins[0].id;
+
     const [result] = await pool.query(
-      'UPDATE complaints SET status = ?, resolution_note = ?, resolved_at = NOW() WHERE id = ?',
-      ['Resolved', resolutionNote || '', id]
+      'UPDATE complaints SET status = ?, resolution_note = ?, resolved_at = NOW(), resolved_by = ? WHERE id = ?',
+      ['Resolved', resolutionNote || '', adminId, id]
     );
 
     if (result.affectedRows === 0) {
@@ -68,7 +86,6 @@ app.put('/api/complaints/:id/resolve', async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    // This will show you the real reason (e.g., "Unknown column 'resolution_note'")
     console.error('Error resolving complaint:', error);
     res.status(500).json({
       error: 'Failed to resolve complaint',
