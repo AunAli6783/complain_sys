@@ -8,40 +8,81 @@ export default function Home() {
   const [category, setCategory] = useState("general");
   const navigate = useNavigate();
 
-  const onSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const userId = Number(localStorage.getItem("userId"));
+    const userUsername = localStorage.getItem("userUsername");
+
+    console.log("=== SUBMITTING COMPLAINT ===");
+    console.log("localStorage.getItem('userId'):", localStorage.getItem("userId"));
+    console.log("localStorage.getItem('userUsername'):", localStorage.getItem("userUsername"));
+    console.log("Parsed userId:", userId);
+    console.log("userUsername:", userUsername);
+    console.log("All localStorage keys:", Object.keys(localStorage));
+
+    const complaintData = {
+      title,
+      description,
+      category,
+      userId: userId,
+      userUsername: userUsername
+    };
+
+    console.log("Sending complaint data:", complaintData);
+
     try {
-      await addComplaint({ title, description, category });
+      const response = await fetch('http://localhost:3000/api/complaints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(complaintData)
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+
       setTitle("");
       setDescription("");
       setCategory("general");
       alert("Complaint submitted successfully!");
       navigate("/complaints");
     } catch (error) {
-      alert("Failed to submit complaint. Please try again.");
+      console.error("Error submitting complaint:", error);
+      alert("Failed to submit complaint: " + error.message);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("userAuthed");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userUsername");
+    localStorage.removeItem("authRole");
+    localStorage.removeItem("authUsername");
+    localStorage.removeItem("authId");
+    navigate("/auth");
   };
 
   return (
     <section className="home">
-      <div className="home-header">
-        <h1 className="home-title">Welcome to the Complaint Management System</h1>
-        <p className="home-subtitle">
-          Submit and track your complaints easily. Admins can manage complaints efficiently.
-        </p>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Submit a Complaint</h1>
+          <p className="subtitle">Describe your issue and we'll help resolve it</p>
+        </div>
+        <div className="item-actions">
+          <Link to="/complaints" className="btn">
+            My Complaints
+          </Link>
+          <Link to="/resolved" className="btn">
+            Resolved
+          </Link>
+          <button onClick={handleLogout} className="btn">
+            Logout
+          </button>
+        </div>
       </div>
 
-      <div className="home-actions">
-        <Link to="/complaints" className="btn primary">
-          View My Complaints
-        </Link>
-        <Link to="/admin/login" className="btn">
-          Admin Login
-        </Link>
-      </div>
-
-      <form className="form" onSubmit={onSubmit}>
-        <h2 className="form-title">Submit a Complaint</h2>
+      <form className="form" onSubmit={handleSubmit}>
         <div className="field">
           <label>Title</label>
           <input
@@ -80,6 +121,7 @@ export default function Home() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter complaint description"
+            rows="6"
             required
           />
         </div>

@@ -1,82 +1,94 @@
-import { useEffect, useMemo, useState } from "react";
-
-const API_BASE = "http://localhost:3000";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { loadComplaints } from "../lib/storage.js";
 
 export default function ResolvedComplaints() {
-  const [items, setItems] = useState([]);
+  const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/complaints`)
-      .then((r) => r.json())
-      .then((rows) =>
-        setItems(
-          (rows || [])
-            .filter((c) => String(c.status || "").toLowerCase().includes("resolve"))
-            .map((c) => ({
-              ...c,
-              resolutionNote: c.resolutionNote || "",
-            }))
-        )
-      )
-      .finally(() => setLoading(false));
+    async function load() {
+      try {
+        const data = await loadComplaints();
+        const currentUserId = Number(localStorage.getItem('userId')); // Convert to number!
+        
+        console.log('🔍 Current user ID:', currentUserId, typeof currentUserId);
+        
+        const filtered = data.filter(c => {
+          const matches = c.userId === currentUserId;
+          console.log(`Complaint ${c.id}: userId=${c.userId}, username=${c.username}, status=${c.status}, matches=${matches}`);
+          return matches && c.status === 'Resolved';
+        });
+        
+        console.log("Resolved complaints:", filtered);
+        setComplaints(filtered);
+      } catch (error) {
+        console.error("Failed to load complaints:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const pretty = useMemo(
-    () =>
-      items.map((c) => {
-        const resolvedBy =
-          c.resolvedByName ||
-          c.resolved_by_name ||
-          c.adminUsername ||
-          c.resolvedBy ||
-          null;
-
-        const createdLabel = c.createdAt ? new Date(c.createdAt).toLocaleString() : null;
-        const resolvedLabel = c.resolvedAt ? new Date(c.resolvedAt).toLocaleString() : null;
-
-        return { ...c, resolvedBy, createdLabel, resolvedLabel };
-      }),
-    [items]
-  );
+  const handleLogout = () => {
+    localStorage.removeItem("userAuthed");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userUsername");
+    localStorage.removeItem("authRole");
+    localStorage.removeItem("authUsername");
+    localStorage.removeItem("authId");
+    navigate("/auth");
+  };
 
   if (loading) return <div className="card">Loading resolved complaints...</div>;
+  if (error) return <div className="card" style={{color: 'red'}}>Error: {error}</div>;
 
   return (
     <section>
       <div className="page-head">
         <div>
           <h1 className="page-title">Resolved Complaints</h1>
-          <p className="subtitle">{pretty.length} resolved</p>
+          <p className="subtitle">{complaints.length} resolved</p>
+        </div>
+        <div className="item-actions">
+          <Link to="/home" className="btn">
+            Submit Complaint
+          </Link>
+          <Link to="/complaints" className="btn">
+            My Complaints
+          </Link>
+          <button onClick={handleLogout} className="btn">
+            Logout
+          </button>
         </div>
       </div>
 
-      {pretty.length === 0 ? (
+      {complaints.length === 0 ? (
         <div className="card empty">No resolved complaints yet.</div>
       ) : (
         <div className="list">
-          {pretty.map((c) => (
-            <div key={c.id} className="item">
-              <div className="item-top">
-                <h2 className="item-title">{c.title || "Complaint"}</h2>
-                <span className="badge badge--ok">Resolved</span>
-              </div>
-
-              <div className="item-meta">
-                <span className="pill">{c.category || "general"}</span>
-                <span className="pill">
-                  Resolved by: {c.resolvedBy ? c.resolvedBy : "Unknown"}
-                </span>
-                {c.createdLabel ? <span className="pill">Created: {c.createdLabel}</span> : null}
-                {c.resolvedLabel ? <span className="pill">Resolved: {c.resolvedLabel}</span> : null}
-              </div>
-
-              <div className="card details">
-                <div className="row">
-                  <div className="k">Resolution Note</div>
-                  <div className="v prewrap">
-                    {c.resolutionNote?.trim() ? c.resolutionNote : "—"}
+          {complaints.map((complaint) => (
+            <div key={complaint.id} className="item item--resolved">
+              <div className="item-grid">
+                <div className="item-main">
+                  <div className="item-top">
+                    <h2 className="item-title">{complaint.title}</h2>
+                    <span className="badge badge--success">Resolved</span>
                   </div>
+                  <div className="item-meta">
+                    <span className="pill">{complaint.category}</span>
+                  </div>
+                  <p className="item-desc">{complaint.description}</p>
+                  {complaint.resolutionNote && (
+                    <div className="resolved-note">
+                      <div className="resolved-note__label">Resolution</div>
+                      <div className="resolved-note__body">{complaint.resolutionNote}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

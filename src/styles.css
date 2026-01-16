@@ -574,3 +574,45 @@ select:focus {
     justify-content: flex-start;
   }
 }
+
+/* ...existing code... */
+
+.auth {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.auth-card {
+  padding: 18px;
+}
+
+.auth-head {
+  margin-bottom: 12px;
+}
+
+.auth-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0 6px;
+}
+
+.auth-toggle {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.auth-error {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(233, 69, 96, 0.35);
+  background: rgba(233, 69, 96, 0.12);
+  color: rgba(234, 240, 255, 0.92);
+  margin: 6px 0 0;
+}
+
+/* ...existing code... */

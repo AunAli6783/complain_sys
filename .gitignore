@@ -19,6 +19,9 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+!.env.production.example  # add if you use it
+# If you REALLY must commit one specific env file (not recommended), use:
+#!.env.production
 
 # coverage
 coverage/

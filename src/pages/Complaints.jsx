@@ -8,7 +8,23 @@ export default function Complaints() {
 
   useEffect(() => {
     loadComplaints()
-      .then(setComplaints)
+      .then((allComplaints) => {
+        const userId = Number(localStorage.getItem("userId"));
+        const userUsername = localStorage.getItem("userUsername");
+        
+        console.log("Filtering complaints. UserId:", userId, "Username:", userUsername);
+        console.log("Sample complaint:", allComplaints[0]);
+        
+        // Filter to show only current user's complaints
+        const userComplaints = allComplaints.filter((c) => {
+          const matchesId = c.user_id === userId || c.userId === userId;
+          const matchesUsername = c.username === userUsername || c.userUsername === userUsername;
+          return matchesId || matchesUsername;
+        });
+        
+        console.log("Filtered user complaints:", userComplaints.length);
+        setComplaints(userComplaints);
+      })
       .finally(() => setLoading(false));
   }, []);
 

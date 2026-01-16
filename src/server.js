@@ -1,13 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import pool from './lib/db.js';
-import bcrypt from 'bcryptjs';
+import authRouter from "./routes/auth.js";
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Mount auth routes FIRST (before other routes)
+app.use("/api/auth", authRouter);
 
 // Get all complaints (include resolver name if resolved)
 app.get('/api/complaints', async (req, res) => {
@@ -24,12 +27,32 @@ app.get('/api/complaints', async (req, res) => {
     );
 
     const normalized = rows.map((r) => ({
-      ...r,
-      createdAt: r.created_at ?? r.createdAt,
-      resolvedAt: r.resolved_at ?? r.resolvedAt,
-      resolutionNote: r.resolution_note ?? r.resolutionNote,
-      resolvedByName: r.resolved_by_name ?? r.resolvedByName
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      status: r.status,
+      userId: Number(r.user_id) || null,
+      user_id: Number(r.user_id) || null,
+      userUsername: r.username || null,
+      username: r.username || null,
+      createdAt: r.created_at,
+      created_at: r.created_at,
+      resolvedAt: r.resolved_at,
+      resolved_at: r.resolved_at,
+      resolutionNote: r.resolution_note,
+      resolution_note: r.resolution_note,
+      resolvedBy: r.resolved_by,
+      resolved_by: r.resolved_by,
+      resolvedByName: r.resolved_by_name,
+      resolved_by_name: r.resolved_by_name
     }));
+
+    // Debug logging
+    console.log(`Returning ${normalized.length} complaints`);
+    if (normalized.length > 0) {
+      console.log('Sample complaint:', JSON.stringify(normalized[0], null, 2));
+    }
 
     res.json(normalized);
   } catch (error) {
@@ -40,16 +63,41 @@ app.get('/api/complaints', async (req, res) => {
 
 // Add new complaint
 app.post('/api/complaints', async (req, res) => {
-  const { title, description, category } = req.body;
+  const { title, description, category, userId, userUsername } = req.body;
+  
+  console.log('=== POST /api/complaints ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Extracted values:', { 
+    title, 
+    description, 
+    category, 
+    userId: userId, 
+    userUsername: userUsername,
+    userIdType: typeof userId,
+    usernameType: typeof userUsername
+  });
   
   try {
     const [result] = await pool.query(
-      'INSERT INTO complaints (title, description, category, status, created_at) VALUES (?, ?, ?, ?, NOW())',
-      [title, description, category || 'general', 'Pending']
+      'INSERT INTO complaints (title, description, category, status, user_id, username, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())',
+      [title, description, category || 'general', 'Pending', userId || null, userUsername || null]
     );
+    
+    console.log('✅ Complaint inserted successfully');
+    console.log('   - Insert ID:', result.insertId);
+    console.log('   - User ID saved:', userId);
+    console.log('   - Username saved:', userUsername);
+    
+    // Verify what was actually saved
+    const [verify] = await pool.query(
+      'SELECT id, user_id, username FROM complaints WHERE id = ?',
+      [result.insertId]
+    );
+    console.log('   - Verified in DB:', verify[0]);
+    
     res.json({ id: result.insertId, success: true });
   } catch (error) {
-    console.error('Error adding complaint:', error);
+    console.error('❌ Error adding complaint:', error);
     res.status(500).json({ error: 'Failed to add complaint' });
   }
 });
@@ -91,34 +139,6 @@ app.put('/api/complaints/:id/resolve', async (req, res) => {
       error: 'Failed to resolve complaint',
       details: error?.sqlMessage || error?.message || String(error)
     });
-  }
-});
-
-// Admin login
-app.post('/api/admin/login', async (req, res) => {
-  const { username, password } = req.body;
-  
-  try {
-    const [rows] = await pool.query(
-      'SELECT * FROM admins WHERE username = ?',
-      [username]
-    );
-    
-    if (rows.length === 0) {
-      return res.status(401).send('Invalid credentials');
-    }
-    
-    const admin = rows[0];
-    const isValid = await bcrypt.compare(password, admin.password);
-    
-    if (!isValid) {
-      return res.status(401).send('Invalid credentials');
-    }
-    
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).send('Server error');
   }
 });
 

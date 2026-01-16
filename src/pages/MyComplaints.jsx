@@ -1,20 +1,53 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loadComplaints } from "../lib/storage.js";
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    loadComplaints()
-      .then(setComplaints)
-      .finally(() => setLoading(false));
+    async function load() {
+      try {
+        const data = await loadComplaints();
+        const currentUserId = Number(localStorage.getItem('userId')); // Convert to number!
+        
+        console.log('🔍 Current user ID:', currentUserId, typeof currentUserId);
+        
+        const filtered = data.filter(c => {
+          const matches = c.userId === currentUserId;
+          console.log(`Complaint ${c.id}: userId=${c.userId}, username=${c.username}, matches=${matches}`);
+          return matches && c.status !== 'Resolved';
+        });
+        
+        console.log("User complaints:", filtered);
+        setComplaints(filtered);
+      } catch (error) {
+        console.error("Failed to load complaints:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("userAuthed");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userUsername");
+    localStorage.removeItem("authRole");
+    localStorage.removeItem("authUsername");
+    localStorage.removeItem("authId");
+    navigate("/auth");
+  };
 
   const total = complaints.length;
 
   if (loading) return <div className="card">Loading complaints...</div>;
+  if (error) return <div className="card" style={{color: 'red'}}>Error: {error}</div>;
 
   return (
     <section>
@@ -25,17 +58,23 @@ export default function MyComplaints() {
         </div>
 
         <div className="item-actions">
-          <Link to="/" className="btn">
-            Home
+          <Link to="/home" className="btn">
+            Submit Complaint
           </Link>
+          <Link to="/resolved" className="btn">
+            Resolved
+          </Link>
+          <button onClick={handleLogout} className="btn">
+            Logout
+          </button>
         </div>
       </div>
 
       {total === 0 ? (
         <div className="card empty">
           No complaints found.{" "}
-          <Link to="/" className="link">
-            Submit one on Home
+          <Link to="/home" className="link">
+            Submit one
           </Link>
           .
         </div>
@@ -52,10 +91,6 @@ export default function MyComplaints() {
                         .toLowerCase()
                         .includes("resolve")
                         ? "badge--ok"
-                        : String(complaint.status ?? "Pending")
-                            .toLowerCase()
-                            .includes("progress")
-                        ? "badge--warn"
                         : "badge--neutral"}`}
                     >
                       {complaint.status ?? "Pending"}

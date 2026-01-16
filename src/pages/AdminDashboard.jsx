@@ -23,7 +23,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!authed) {
-      navigate("/admin/login");
+      navigate("/auth?role=admin&mode=login");
       return;
     }
     getComplaints().then(setComplaints);
