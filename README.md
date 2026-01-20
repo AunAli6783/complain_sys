@@ -151,6 +151,8 @@ npm start
 
 The application should now be running at `http://localhost:3000`.
 
+Demo Video: https://www.loom.com/share/d66098eb8f2e41838014b43b0c7d395b
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
